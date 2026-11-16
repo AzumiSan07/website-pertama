@@ -3,10 +3,249 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Website Pertamaku</title>
+    <title>CEMAR: Simulasi Pengecekan Kamar</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        /* HUD Atas (Timer & Kebersihan) */
+        .hud {
+            width: 100%;
+            max-width: 700px;
+            background: #1e293b;
+            border: 2px solid #334155;
+            border-radius: 12px;
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        }
+        .hud-item span {
+            display: block;
+            font-size: 12px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .hud-item strong {
+            font-size: 24px;
+            color: #38bdf8;
+        }
+        #timer.danger {
+            color: #ef4444;
+        }
+        /* Area Utama Kamar */
+        .room-container {
+            width: 100%;
+            max-width: 700px;
+            background: #1e293b;
+            border: 2px solid #334155;
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+        }
+        h1 {
+            font-size: 26px;
+            color: #facc15;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+        }
+        p.subtitle {
+            color: #94a3b8;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+        /* Daftar Tugas Kebersihan */
+        .task-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .task-card {
+            background: #0f172a;
+            border: 2px solid #475569;
+            border-radius: 10px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .task-card:hover {
+            border-color: #38bdf8;
+            transform: translateY(-3px);
+        }
+        .task-card.clean {
+            background: #064e3b;
+            border-color: #10b981;
+            cursor: default;
+            transform: none;
+        }
+        .task-card h3 {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+        .task-card p {
+            font-size: 13px;
+            color: #cbd5e1;
+        }
+        /* Tombol Panggil OSIS */
+        .btn-osis {
+            background: #eab308;
+            color: #0f172a;
+            border: none;
+            padding: 14px 28px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-osis:hover {
+            background: #facc15;
+        }
+        /* Rapor Hasil Inspeksi */
+        #rapor {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: #0f172a;
+            border: 2px solid #facc15;
+            border-radius: 10px;
+        }
+        .grade {
+            font-size: 48px;
+            font-weight: bold;
+            color: #10b981;
+            margin: 10px 0;
+        }
+    </style>
 </head>
 <body>
-    <h1>Halo! Ini Website Pertamaku</h1>
-    <p>Berhasil dibuat menggunakan Visual Studio Code.</p>
+
+    <!-- HUD Atas -->
+    <div class="hud">
+        <div class="hud-item">
+            <span>Lokasi</span>
+            <strong>KAMAR 04</strong>
+        </div>
+        <div class="hud-item">
+            <span>Kebersihan</span>
+            <strong id="clean-percent">0%</strong>
+        </div>
+        <div class="hud-item">
+            <span>Sisa Waktu Sidak</span>
+            <strong id="timer">00:30</strong>
+        </div>
+    </div>
+
+    <!-- Area Kamar -->
+    <div class="room-container">
+        <h1>CEMAR: PENGECEKAN KAMAR</h1>
+        <p class="subtitle">Klik semua objek kotor di kamar sebelum petugas DKLH datang melakukan sidak!</p>
+
+        <div class="task-grid">
+            <div class="task-card" onclick="bersihkan(this, 25)">
+                <h3>🛏️ Tempat Tidur</h3>
+                <p>Status: Berantakan (Klik untuk rapikan)</p>
+            </div>
+            <div class="task-card" onclick="bersihkan(this, 25)">
+                <h3>🧹 Lantai Berdebu</h3>
+                <p>Status: Kotor (Klik untuk menyapu)</p>
+            </div>
+            <div class="task-card" onclick="bersihkan(this, 25)">
+                <h3>👕 Pakaian Menumpuk</h3>
+                <p>Status: Menumpuk (Klik untuk lipat)</p>
+            </div>
+            <div class="task-card" onclick="bersihkan(this, 25)">
+                <h3>🚽 Kamar Mandi / WC</h3>
+                <p>Status: Licin & Bau (Klik untuk sikat)</p>
+            </div>
+        </div>
+
+        <button class="btn-osis" onclick="panggilOsis()">📢 Panggil OSIS (Selesai Bersih-Bersih)</button>
+
+        <!-- Rapor Hasil -->
+        <div id="rapor">
+            <h2>RAPOR INSPEKSI DKLH</h2>
+            <div class="grade" id="grade-letter">A</div>
+            <p id="grade-desc">Kamar bersih sempurna! Anda mendapatkan +50 Poin Disiplin (PD).</p>
+            <br>
+            <button class="btn-osis" onclick="location.reload()">Main Lagi</button>
+        </div>
+    </div>
+
+    <script>
+        let kebersihan = 0;
+        let waktu = 30;
+        let gameSelesai = false;
+
+        // Timer Hitung Mundur
+        const timerElement = document.getElementById('timer');
+        const interval = setInterval(() => {
+            if (gameSelesai) return;
+            waktu--;
+            let detik = waktu < 10 ? '0' + waktu : waktu;
+            timerElement.innerText = '00:' + detik;
+
+            if (waktu <= 10) {
+                timerElement.classList.add('danger');
+            }
+            if (waktu <= 0) {
+                clearInterval(interval);
+                panggilOsis();
+            }
+        }, 1000);
+
+        // Fungsi Membersihkan Objek
+        function bersihkan(elemen, nilai) {
+            if (gameSelesai || elemen.classList.contains('clean')) return;
+
+            elemen.classList.add('clean');
+            elemen.querySelector('p').innerText = 'Status: Bersih & Rapi ✓';
+            kebersihan += nilai;
+            document.getElementById('clean-percent').innerText = kebersihan + '%';
+        }
+
+        // Fungsi Penilaian OSIS
+        function panggilOsis() {
+            if (gameSelesai) return;
+            gameSelesai = true;
+            clearInterval(interval);
+
+            const rapor = document.getElementById('rapor');
+            const gradeLetter = document.getElementById('grade-letter');
+            const gradeDesc = document.getElementById('grade-desc');
+
+            rapor.style.display = 'block';
+
+            if (kebersihan === 100) {
+                gradeLetter.innerText = 'A';
+                gradeLetter.style.color = '#10b981';
+                gradeDesc.innerText = 'Kamar bersih 100%! Lulus inspeksi dan mendapat +50 Poin Disiplin (PD).';
+            } else if (kebersihan >= 50) {
+                gradeLetter.innerText = 'B';
+                gradeLetter.style.color = '#38bdf8';
+                gradeDesc.innerText = 'Cukup bersih (' + kebersihan + '%), namun masih ada sedikit debu. Mendapat +20 PD.';
+            } else {
+                gradeLetter.innerText = 'F';
+                gradeLetter.style.color = '#ef4444';
+                gradeDesc.innerText = 'PELANGGARAN KEBERSIHAN! Kamar masih kotor (' + kebersihan + '%). Anda terkena sanksi DKLH.';
+            }
+        }
+    </script>
 </body>
 </html>
